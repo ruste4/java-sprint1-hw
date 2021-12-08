@@ -84,7 +84,7 @@ public class MonthlyReport {
         return maxProfitableProduct;
     }
 
-    private Product getMaxExpense () {
+    private Product getMaxExpense() {
         Product maxExpenseProduct = null;
         int maxExpense = 0;
 
