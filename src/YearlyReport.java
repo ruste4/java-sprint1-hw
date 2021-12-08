@@ -1,41 +1,40 @@
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 
 public class YearlyReport {
-    String fileName = "y.2021.csv";
     String folder = "resources/";
-    ArrayList<Month> report;
     String[] monthNames = { "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август",
             "Сентябрь", "Октябрь", "Ноябрь", "Декабрь" };
+    String fileName;
+    Integer yearlyNum;
+    ArrayList<Month> report;
 
-    public void uploadingData() {
-        String path = this.folder + this.fileName;
-        String fileContents = readFileContentsOrNull(path);
-        this.report = deserialize(fileContents);
+    YearlyReport(String fileName) {
+        this.fileName = fileName;
+        this.yearlyNum = Integer.parseInt(fileName.substring(2,6));
+        this.report = new ArrayList<>();
     }
 
-    public void printInfoAllMonthlyReports() {
-        System.out.println(fileName.substring(2,6) + " год");
+    public void printYearlyInfo() {
+        System.out.println("\n" + this.yearlyNum);
         for (Month month : report) {
             System.out.println("Прибыль в месяце " + month.monthName + " составила " +
                     month.getProfit() + " руб.");
         }
         System.out.println("Средний расход за все месяцы в году " + averageExpense() + " руб.");
         System.out.println("Средний доход за все месяцы в году " + averageIncome() + " руб.");
+
     }
 
-    private int averageExpense() {
+    private Integer averageExpense() {
         int expenseSum = 0;
 
-        for (Month month : report) {
+        for (Month month : this.report) {
             expenseSum += month.expense;
         }
-        return expenseSum / report.size();
+        return expenseSum / this.report.size();
     }
 
-    private int averageIncome() {
+    private Integer averageIncome() {
         int incomeSum = 0;
 
         for (Month month : report) {
@@ -44,58 +43,40 @@ public class YearlyReport {
         return incomeSum / report.size();
     }
 
-    private ArrayList<Month> deserialize(String fileContents) {
-        ArrayList<Month> months = new ArrayList<>();
-        String[] lines = fileContents.split("\\n");
-        for (int i = 1; i < lines.length; i++) {
-            String[] line = lines[i].split(",");
-            String monthNum = line[0];
-            String monthName = monthNames[Integer.parseInt(monthNum) - 1];
-            int income = findMonthlyIncome(monthNum, lines);
-            int expense = findMonthlyExpense(monthNum, lines);
-            Month month = new Month(monthName, monthNum, income, expense);
-
-            if (!months.contains(month)) {
-                months.add(month);
-            }
-        }
-        return months;
+    public void uploadingData() {
+        this.report.clear();
+        String fileContent = ReadFile.readFileContentsOrNull(this.folder + this.fileName);
+        this.report = deserialize(fileContent);
     }
 
-    private int findMonthlyIncome(String requiredMonthNum, String[] lines) {
-        for (int i = 1; i < lines.length; i++) {
-            String[] line = lines[i].split(",");
-            boolean isExpense = Boolean.parseBoolean(line[2]);
-            String monthNum = line[0];
-            int amount = Integer.parseInt(line[1]);
-            if (!isExpense && monthNum.equals(requiredMonthNum)) {
-                return amount;
+    private ArrayList<Month> deserialize(String fileContent) {
+        ArrayList<Month> parsedYearlyReportRows = new ArrayList<>();
+
+        if (fileContent != null) {
+            String[] contentLines = fileContent.split("\n");
+            Integer income = null;
+            Integer expense = null;
+
+            for (int i = 1; i < contentLines.length; i++) {
+                String[] line = contentLines[i].split(",");
+                Integer monthlyNum = Integer.parseInt(line[0]);
+                String monthName = this.monthNames[monthlyNum - 1];
+                Integer amount = Integer.parseInt(line[1]);
+                Boolean isExpense = Boolean.parseBoolean(line[2]);
+
+                if (isExpense) {
+                    expense = amount;
+                } else {
+                    income = amount;
+                }
+
+                if ((expense != null) && (income != null)) {
+                    parsedYearlyReportRows.add(new Month(monthName, monthlyNum, income, expense));
+                    expense = null;
+                    income = null;
+                }
             }
         }
-        return 0;
-    }
-
-    private int findMonthlyExpense(String requiredMonthNum, String[] lines) {
-        for (int i = 1; i < lines.length; i++) {
-            String[] line = lines[i].split(",");
-            boolean isExpense = Boolean.parseBoolean(line[2]);
-            String monthNum = line[0];
-            int amount = Integer.parseInt(line[1]);
-            if (isExpense && monthNum.equals(requiredMonthNum)) {
-                return amount;
-            }
-        }
-
-        return 0;
-    }
-
-    private String readFileContentsOrNull(String path) {
-        try {
-            return Files.readString(Path.of(path));
-        } catch (IOException e) {
-            System.out.println("Невозможно прочитать файл с месячным отчётом. Возможно, " +
-                    "файл не находится в нужной директории.");
-            return null;
-        }
+        return parsedYearlyReportRows;
     }
 }

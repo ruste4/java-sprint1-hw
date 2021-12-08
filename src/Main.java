@@ -1,47 +1,89 @@
+import java.util.HashMap;
 import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        MonthlyReport monthlyReport = new MonthlyReport();
-        YearlyReport yearlyReport = new YearlyReport();
+        String[] monthlyFiles = {"m.202101.csv", "m.202102.csv", "m.202103.csv"};
+        String yearlyFile = "y.2021.csv";
+        HashMap<Integer, MonthlyReport> monthlyReports = new HashMap<>();
+        YearlyReport yearlyReport = null;
 
         while (true) {
             printMenu();
             String command = scanner.next();
 
-            if (command.equals("1")) {
-                monthlyReport.uploadingData();
-            } else if (command.equals("2")) {
-                yearlyReport.uploadingData();
-            } else if (command.equals("3")) {
-                verifyTheData(yearlyReport, monthlyReport);
-            } else if (command.equals("4")) {
-                monthlyReport.printInfoAllMonthlyReports();
-            } else if (command.equals("5")) {
-                yearlyReport.printInfoAllMonthlyReports();
-            }else if (command.equals("quit")) {
+            if (command.equals("quit")) {
                 break;
-            } else {
-                System.out.println("Такой команды нет");
             }
+
+            switch (command) {
+                case "1":
+                    monthlyReports.clear();
+                    for (String mothlyFile : monthlyFiles) {
+                        MonthlyReport report = new MonthlyReport(mothlyFile);
+                        report.uploadingData();
+                        monthlyReports.put(report.monthlyNum, report);
+                    }
+                    break;
+                case "2":
+                    yearlyReport = new YearlyReport(yearlyFile);
+                    yearlyReport.uploadingData();
+                    if (yearlyReport.report.isEmpty()) {
+                        System.out.println("Не получилось загрузить годовой отчет");
+                        yearlyReport = null;
+                    }
+                    break;
+                case "3":
+                    if (yearlyReport != null || !monthlyReports.isEmpty()) {
+                        verifyReports(monthlyReports, yearlyReport);
+                    } else {
+                        System.out.println("\nЗагрузите месячные и годовой отчеты");
+                    }
+                    break;
+                case "4":
+                    if (!monthlyReports.isEmpty()) {
+                        for (MonthlyReport report : monthlyReports.values()) {
+                            report.printMonthlyInfo();
+                        }
+                    } else {
+                        System.out.println("\nЗагрузите месячные отчеты");
+                    }
+                    break;
+                case "5":
+                    if (yearlyReport != null) {
+                        yearlyReport.printYearlyInfo();
+                    } else {
+                        System.out.println("\nФайл с годовым отчетом не загружен");
+                    }
+                    break;
+                default:
+                    System.out.println("Такой команды нет");
+            }
+
+
         }
     }
 
-    private static void verifyTheData(YearlyReport yReport, MonthlyReport mReport) {
-        boolean verifyResult = true;
-        for (Month month : yReport.report) {
-            int totalIncome = mReport.getTotalIncome(month.monthNum);
-            int totalExpense = mReport.getTotalExpense(month.monthNum);
-            boolean incomeVerify = totalIncome == month.income;
-            boolean expenseVerify = totalExpense == month.expense;
+    private static void verifyReports(HashMap<Integer, MonthlyReport> monthlyReports,
+                                      YearlyReport yearlyReport) {
+        Boolean verifyResult = true;
 
-            if (!incomeVerify || !expenseVerify) {
-                System.out.println("В отчетах за " + month.monthName + " несоответствие");
+        for (Month yMonth : yearlyReport.report) {
+            Integer monthNum = yMonth.monthNum;
+            MonthlyReport mMonth = monthlyReports.get(monthNum);
+            int yIncome = yMonth.income;
+            int yExpense = yMonth.expense;
+            int mIncome = mMonth.getTotalIncome();
+            int mExpense = mMonth.getTotalExpense();
+
+            if ((yIncome != mIncome) || (yExpense != mExpense)) {
+                System.out.println("В отчетах за " + yMonth.monthName + " несоответствие");
                 verifyResult = false;
             }
         }
+
         if (verifyResult) {
             System.out.println("Сверка отчетов прошла успешно");
         }

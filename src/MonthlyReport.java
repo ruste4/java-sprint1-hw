@@ -1,78 +1,81 @@
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class MonthlyReport {
     String folder = "resources/";
-    String[] fileNames = {"m.202101.csv", "m.202102.csv", "m.202103.csv"};
     String[] monthNames = { "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август",
             "Сентябрь", "Октябрь", "Ноябрь", "Декабрь" };
-    HashMap<String, ArrayList<Product>> report = new HashMap<>();
+    String fileName;
+    Integer monthlyNum;
+    String monthlyName;
+    ArrayList<Product> report;
+
+    MonthlyReport(String fileName) {
+        this.fileName = fileName;
+        this.report = new ArrayList<>();
+        this.monthlyNum = Integer.parseInt(fileName.substring(6, 8));
+        this.monthlyName = this.monthNames[this.monthlyNum - 1];
+    }
 
     public void uploadingData() {
-        for (String fileName : fileNames) {
-            String monthNumber = fileName.substring(6, 8);
-            String filePath = this.folder + fileName;
-            String fileContent = readFileContentsOrNull(filePath);
-            ArrayList<Product> month = deserialize(fileContent);
-            report.put(monthNumber, month);
-        }
+        this.report.clear();
+        String fileContent = ReadFile.readFileContentsOrNull(folder + fileName);
+        this.report = deserialize(fileContent);
+
     }
 
-    public int getTotalIncome(String monthNum) {
-        ArrayList<Product> month = report.get(monthNum);
-        int incomeSum = 0;
-        for (Product product : month) {
+    private ArrayList<Product> deserialize(String fileContent) {
+        ArrayList<Product> products = new ArrayList<>();
+
+        if (fileContent != null) {
+            String[] contentLines = fileContent.split("\n");
+            for (int i = 1; i < contentLines.length; i++) {
+                String[] line = contentLines[i].split(",");
+                String itemName = line[0];
+                boolean isExpense = Boolean.parseBoolean(line[1]);
+                int quantity = Integer.parseInt(line[2]);
+                int sumOfOne = Integer.parseInt(line[3]);
+
+                products.add(new Product(itemName, isExpense, quantity, sumOfOne));
+            }
+        }
+        return products;
+    }
+
+    public Integer getTotalIncome() {
+        Integer totalIncome = 0;
+
+        for (Product product : this.report) {
             if (!product.isExpense) {
-                incomeSum += product.getSumOfAll();
+                totalIncome += product.getSumOfAll();
             }
         }
-        return incomeSum;
+        return totalIncome;
     }
 
-    public int getTotalExpense(String monthNum) {
-        ArrayList<Product> month = report.get(monthNum);
-        int expenseSum = 0;
-        for (Product product : month) {
+    public Integer getTotalExpense() {
+        Integer totalExpense = 0;
+
+        for (Product product : this.report) {
             if (product.isExpense) {
-                expenseSum += product.getSumOfAll();
+                totalExpense += product.getSumOfAll();
             }
         }
-        return expenseSum;
+        return totalExpense;
     }
 
-    public void printInfoAllMonthlyReports() {
-        for(String monthNum : report.keySet()) {
-            String monthName = monthNames[Integer.parseInt(monthNum) - 1];
-            Product maxProfitableProduct = getMaxProfitableProduct(report.get(monthNum));
-            Product maxExpenseProduct = getMaxExpense(report.get(monthNum));
-
-            System.out.println("\n" + monthName);
-            System.out.println("Самый прибыльный товар - " + maxProfitableProduct.itemName +
-                    ", на общую сумму " + maxProfitableProduct.getSumOfAll() + " рублей.");
-            System.out.println("Самая большая трата - " + maxExpenseProduct.itemName +
-                    ", на общую сумму " + maxExpenseProduct.getSumOfAll() + " рублей.");
-        }
+    public void printMonthlyInfo() {
+        System.out.println("\n" + monthlyName);
+        System.out.println("Самый прибыльный товар - " + getMaxProfitableProduct().itemName +
+                ", на общую сумму " + getMaxProfitableProduct().getSumOfAll() + " рублей.");
+        System.out.println("Самая большая трата - " + getMaxExpense().itemName +
+                ", на общую сумму " + getMaxExpense().getSumOfAll() + " рублей.");
     }
 
-    private Product getMaxExpense (ArrayList<Product> monthlyReport) {
-        Product maxExpenseProduct = null;
-        int maxExpense = 0;
-        for (Product product : monthlyReport) {
-            if ((product.isExpense) && (product.getSumOfAll() > maxExpense)) {
-                maxExpenseProduct = product;
-                maxExpense = product.getSumOfAll();
-            }
-        }
-        return maxExpenseProduct;
-    }
-
-    private Product getMaxProfitableProduct (ArrayList<Product> monthlyReport) {
+    private Product getMaxProfitableProduct() {
         Product maxProfitableProduct = null;
         int maxProfit = 0;
-        for (Product product : monthlyReport) {
+
+        for (Product product : this.report) {
             if ((!product.isExpense) && (product.getSumOfAll() > maxProfit)) {
                 maxProfitableProduct = product;
                 maxProfit = product.getSumOfAll();
@@ -81,29 +84,16 @@ public class MonthlyReport {
         return maxProfitableProduct;
     }
 
-    private ArrayList<Product> deserialize(String fileContents) {
-        ArrayList<Product> products = new ArrayList<>();
-        String[] lines = fileContents.split("\\n");
+    private Product getMaxExpense () {
+        Product maxExpenseProduct = null;
+        int maxExpense = 0;
 
-        for (int i = 1; i < lines.length; i++) {
-            String[] line = lines[i].split(",");
-            String itemName = line[0];
-            boolean isExpense = Boolean.parseBoolean(line[1]);
-            int quantity = Integer.parseInt(line[2]);
-            int sumOfOne = Integer.parseInt(line[3]);
-            Product product = new Product(itemName, isExpense, quantity, sumOfOne);
-            products.add(product);
+        for (Product product : this.report) {
+            if ((product.isExpense) && (product.getSumOfAll() > maxExpense)) {
+                maxExpenseProduct = product;
+                maxExpense = product.getSumOfAll();
+            }
         }
-        return products;
-    }
-
-    private String readFileContentsOrNull(String path) {
-        try {
-            return Files.readString(Path.of(path));
-        } catch (IOException e) {
-            System.out.println("Невозможно прочитать файл с месячным отчётом. Возможно, " +
-                    "файл не находится в нужной директории.");
-            return null;
-        }
+        return maxExpenseProduct;
     }
 }
