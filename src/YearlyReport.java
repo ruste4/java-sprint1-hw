@@ -2,16 +2,16 @@ import java.util.ArrayList;
 
 public class YearlyReport {
     String folder = "resources/";
-    String[] monthNames = { "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август",
-            "Сентябрь", "Октябрь", "Ноябрь", "Декабрь" };
+    String[] monthNames;
     String fileName;
     Integer yearlyNum;
     ArrayList<Month> report;
 
-    YearlyReport(String fileName) {
+    YearlyReport(String fileName, String[] monthNames) {
         this.fileName = fileName;
-        this.yearlyNum = Integer.parseInt(fileName.substring(2,6));
+        this.yearlyNum = Integer.parseInt(fileName.substring(2, 6));
         this.report = new ArrayList<>();
+        this.monthNames = monthNames;
     }
 
     public void printYearlyInfo() {
@@ -45,7 +45,7 @@ public class YearlyReport {
 
     public void uploadingData() {
         this.report.clear();
-        String fileContent = ReadFile.readFileContentsOrNull(this.folder + this.fileName);
+        String fileContent = FileReader.readFileContentsOrNull(this.folder + this.fileName);
         this.report = deserialize(fileContent);
     }
 
@@ -59,10 +59,10 @@ public class YearlyReport {
 
             for (int i = 1; i < contentLines.length; i++) {
                 String[] line = contentLines[i].split(",");
-                Integer monthlyNum = Integer.parseInt(line[0]);
+                int monthlyNum = Integer.parseInt(line[0]);
                 String monthName = this.monthNames[monthlyNum - 1];
-                Integer amount = Integer.parseInt(line[1]);
-                Boolean isExpense = Boolean.parseBoolean(line[2]);
+                int amount = Integer.parseInt(line[1]);
+                boolean isExpense = Boolean.parseBoolean(line[2]);
 
                 if (isExpense) {
                     expense = amount;

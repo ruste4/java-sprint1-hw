@@ -2,25 +2,23 @@ import java.util.ArrayList;
 
 public class MonthlyReport {
     String folder = "resources/";
-    String[] monthNames = { "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август",
-            "Сентябрь", "Октябрь", "Ноябрь", "Декабрь" };
+    String[] monthNames;
     String fileName;
     Integer monthlyNum;
     String monthlyName;
     ArrayList<Product> report;
 
-    MonthlyReport(String fileName) {
+    MonthlyReport(String fileName, String[] monthNames) {
         this.fileName = fileName;
         this.report = new ArrayList<>();
         this.monthlyNum = Integer.parseInt(fileName.substring(6, 8));
+        this.monthNames = monthNames;
         this.monthlyName = this.monthNames[this.monthlyNum - 1];
     }
 
     public void uploadingData() {
-        this.report.clear();
-        String fileContent = ReadFile.readFileContentsOrNull(folder + fileName);
+        String fileContent = FileReader.readFileContentsOrNull(folder + fileName);
         this.report = deserialize(fileContent);
-
     }
 
     private ArrayList<Product> deserialize(String fileContent) {
@@ -42,7 +40,7 @@ public class MonthlyReport {
     }
 
     public Integer getTotalIncome() {
-        Integer totalIncome = 0;
+        int totalIncome = 0;
 
         for (Product product : this.report) {
             if (!product.isExpense) {
@@ -53,7 +51,7 @@ public class MonthlyReport {
     }
 
     public Integer getTotalExpense() {
-        Integer totalExpense = 0;
+        int totalExpense = 0;
 
         for (Product product : this.report) {
             if (product.isExpense) {

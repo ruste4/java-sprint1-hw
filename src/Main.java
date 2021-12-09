@@ -9,6 +9,8 @@ public class Main {
         String yearlyFile = "y.2021.csv";
         HashMap<Integer, MonthlyReport> monthlyReports = new HashMap<>();
         YearlyReport yearlyReport = null;
+        String[] monthNames = { "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль",
+                "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь" };
 
         while (true) {
             printMenu();
@@ -21,14 +23,14 @@ public class Main {
             switch (command) {
                 case "1":
                     monthlyReports.clear();
-                    for (String mothlyFile : monthlyFiles) {
-                        MonthlyReport report = new MonthlyReport(mothlyFile);
+                    for (String mothFile : monthlyFiles) {
+                        MonthlyReport report = new MonthlyReport(mothFile, monthNames);
                         report.uploadingData();
                         monthlyReports.put(report.monthlyNum, report);
                     }
                     break;
                 case "2":
-                    yearlyReport = new YearlyReport(yearlyFile);
+                    yearlyReport = new YearlyReport(yearlyFile, monthNames);
                     yearlyReport.uploadingData();
                     if (yearlyReport.report.isEmpty()) {
                         System.out.println("Не получилось загрузить годовой отчет");
@@ -36,7 +38,7 @@ public class Main {
                     }
                     break;
                 case "3":
-                    if (yearlyReport != null || !monthlyReports.isEmpty()) {
+                    if (yearlyReport != null && !monthlyReports.isEmpty()) {
                         verifyReports(monthlyReports, yearlyReport);
                     } else {
                         System.out.println("\nЗагрузите месячные и годовой отчеты");
@@ -68,7 +70,7 @@ public class Main {
 
     private static void verifyReports(HashMap<Integer, MonthlyReport> monthlyReports,
                                       YearlyReport yearlyReport) {
-        Boolean verifyResult = true;
+        boolean verifyResult = true;
 
         for (Month yMonth : yearlyReport.report) {
             Integer monthNum = yMonth.monthNum;

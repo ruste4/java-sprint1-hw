@@ -1,10 +1,10 @@
 public class Month {
     String monthName;
-    Integer monthNum;
-    Integer income;
-    Integer expense;
+    int monthNum;
+    int income;
+    int expense;
 
-    Month(String monthName, Integer monthNum, Integer income, Integer expense) {
+    Month(String monthName, int monthNum, int income, int expense) {
         this.monthName = monthName;
         this.monthNum = monthNum;
         this.income = income;

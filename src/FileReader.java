@@ -2,7 +2,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class ReadFile {
+public class FileReader {
 
     public static String readFileContentsOrNull(String path) {
         try {
